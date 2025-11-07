@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Embedded Encoded HTML – Auto-Decode</title>
+  <style>
+    body { margin: 0; padding: 0; background: #f0f0f0; }
+    #container { padding: 20px; font-family: sans-serif; }
+  </style>
+</head>
+<body>
+  <div id="container">Loading content…</div>
+
+  <script>
+    // === Begin decoder logic ===
+
+    // Base64 → Uint8Array
+    function base64ToBytes(b64) {
+      const bin = atob(b64);
+      const len = bin.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = bin.charCodeAt(i);
+      }
+      return bytes;
+    }
+
+    // Uint8Array → String
+    function bytesToStr(u8) {
+      return new TextDecoder().decode(u8);
+    }
+
+    // XOR with key bytes
+    function xorWithKey(data, key) {
+      if (!key) return data;
+      const keyBytes = new TextEncoder().encode(key);
+      const out = new Uint8Array(data.length);
+      for (let i = 0; i < data.length; i++) {
+        out[i] = data[i] ^ keyBytes[i % keyBytes.length];
+      }
+      return out;
+    }
+
+    // Decode function: Base64 + XOR
+    function decodePayload(b64, key) {
+      const bytes = base64ToBytes(b64);
+      const xored = xorWithKey(bytes, key);
+      return bytesToStr(xored);
+    }
+
+    // === End decoder logic ===
+
+    // *** replace this with your actual encoded string ***
+    const encodedString = "PUT_YOUR_BASE64_ENCODED_PAYLOAD_HERE";
+
+    // *** replace this with the key you used, if any ***
+    const secretKey = "YOUR_SECRET_KEY_HERE";
+
+    try {
+      const htmlContent = decodePayload(encodedString, secretKey);
+      document.getElementById('container').innerHTML = htmlContent;
+    } catch (err) {
+      document.getElementById('container').innerText = "Failed to decode content.";
+      console.error(err);
+    }
+  </script>
+</body>
+</html>
