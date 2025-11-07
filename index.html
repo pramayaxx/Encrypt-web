@@ -1,40 +1,276 @@
 <!doctype html>
-
-<html lang="si">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Code Tester — Paste & Run</title>
+  <title>HTML Encoder / Simple Encryptor — BJ-style</title>
   <style>
-    :root{--bg:#0f1724;--panel:#0b1220;--muted:#9aa4b2;--accent:#60a5fa}
-    html,body{height:100%;margin:0;background:linear-gradient(180deg,#071129 0%, #071733 100%);font-family:Inter,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial}
-    header{padding:14px 20px;color:#e6eef6}
-    main{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px}
-    .panel{background:var(--panel);border-radius:12px;padding:12px;box-shadow:0 6px 18px rgba(2,6,23,0.6);min-height:60vh;display:flex;flex-direction:column}
-    textarea{width:100%;height:100%;min-height:420px;background:#021025;color:#dff0ff;border:1px solid rgba(255,255,255,0.03);padding:12px;border-radius:8px;font-family:monospace;font-size:13px;resize:vertical}
-    iframe{width:100%;height:100%;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:white}
-    .controls{display:flex;gap:8px;align-items:center;margin-bottom:8px}
-    button{background:var(--accent);color:#07203a;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:600}
-    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
-    .note{color:var(--muted);font-size:13px;margin-top:8px}
-    footer{padding:12px;color:var(--muted);font-size:13px}
-    @media(max-width:900px){main{grid-template-columns:1fr}textarea{min-height:240px}}
+    :root{
+      --bg:#0f1724; --card:#0b1220; --muted:#9aa4b2; --accent:#6ee7b7;
+      --glass: rgba(255,255,255,0.04);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; min-height:100vh; background:linear-gradient(180deg,#071022 0%, #07142a 60%);
+      color:#e6eef6; display:flex; align-items:center; justify-content:center; padding:28px;
+    }
+    .container{width:100%; max-width:1100px;}
+    header{display:flex; align-items:flex-start; gap:16px; margin-bottom:18px;}
+    .logo{
+      width:64px; height:64px; border-radius:10px; background:linear-gradient(135deg,#0ea5a7,#7c3aed);
+      display:flex;align-items:center;justify-content:center;font-weight:700;color:#031022;
+      box-shadow:0 6px 18px rgba(12,17,28,0.6);
+    }
+    h1{margin:0;font-size:20px}
+    p.lead{margin:6px 0 0;color:var(--muted);font-size:13px}
+    .grid{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:12px;}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+         border-radius:12px; padding:14px; box-shadow: 0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03)}
+    label{display:block;font-size:13px;color:var(--muted); margin-bottom:8px}
+    textarea, input[type="text"]{
+      width:100%; background:transparent; color:inherit; border:1px solid rgba(255,255,255,0.04);
+      padding:10px; border-radius:8px; min-height:160px; resize:vertical; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace;
+    }
+    input[type="text"]{height:40px; min-height:0}
+    .row{display:flex; gap:8px; margin-top:10px; align-items:center}
+    button{
+      background:linear-gradient(90deg,#10b981,#06b6d4); border:0; color:#032; padding:10px 12px; border-radius:8px;
+      cursor:pointer; font-weight:600; box-shadow:0 6px 14px rgba(3,7,18,0.6);
+    }
+    button.ghost{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.04);}
+    .small{font-size:13px;padding:8px 10px}
+    .controls{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px}
+    .meta{font-size:13px;color:var(--muted); margin-top:8px}
+    .copy-btn{margin-left:auto}
+    footer{margin-top:10px;color:var(--muted); font-size:12px}
+    .output{min-height:160px;}
+    @media (max-width:880px){ .grid{grid-template-columns:1fr;}}
   </style>
 </head>
 <body>
-  <header>
-    <h1 style="margin:0;font-size:18px">Code Tester — Single-file Website</h1>
-    <div style="color:var(--muted);margin-top:6px">Paste HTML/CSS/JS into the editor and click Run to preview.</div>
-  </header>  <main>
-    <section class="panel">
-      <div class="controls">
-        <button id="runBtn">Run ▶</button>
-        <button id="downloadBtn" class="ghost">Download HTML</button>
-        <button id="clearBtn" class="ghost">Clear</button>
-        <select id="templateSelect" class="ghost" style="margin-left:auto">
-          <option value="blank">Blank HTML</option>
-          <option value="starter">Starter: basic HTML + JS</option>
-          <option value="bootstrap">Bootstrap starter</option>
+  <div class="container" role="main">
+    <header>
+      <div class="logo">ENC</div>
+      <div>
+        <h1>HTML Encoder / Simple Encryptor</h1>
+        <p class="lead">Paste HTML, give an encryption key, press <strong>Encode</strong>. A reversible XOR+Base64 encoder is used (client-side only).</p>
+        <div class="meta">This file is a local, client-side tool — nothing leaves your browser unless you copy/share the output.</div>
+      </div>
+    </header>
+
+    <div class="grid" aria-live="polite">
+      <div class="card">
+        <label for="inputHtml">Input HTML / Text</label>
+        <textarea id="inputHtml" placeholder="Paste your HTML here..."></textarea>
+
+        <div style="margin-top:10px;">
+          <label for="keyInput">Encryption Key (password)</label>
+          <input id="keyInput" type="text" placeholder="Enter a secret key (used for XOR)"/>
+        </div>
+
+        <div class="controls">
+          <button id="encodeBtn">Encode</button>
+          <button id="decodeBtn" class="ghost">Decode (from output)</button>
+          <button id="clearBtn" class="ghost small">Clear</button>
+          <button id="downloadBtn" class="ghost small">Download result</button>
+        </div>
+
+        <div class="meta" style="margin-top:10px;">
+          Algorithm used: UTF-8 bytes → XOR with key bytes (repeated) → Base64. Decoding reverses the steps.
+        </div>
+      </div>
+
+      <div class="card">
+        <label for="output">Output (encoded)</label>
+        <textarea id="output" class="output" readonly placeholder="Encoded output will appear here..."></textarea>
+
+        <div class="row">
+          <label style="margin:0">Options</label>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <button id="copyOut" class="small ghost">Copy Output</button>
+          <button id="previewBtn" class="small">Preview decoded (temp)</button>
+          <div style="margin-left:auto;color:var(--muted);font-size:13px" id="status">Ready</div>
+        </div>
+
+        <footer>
+          Built locally • reversible encoding • keep your key safe
+        </footer>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // Utility: UTF-8 <-> Uint8Array
+  function strToUint8(s){
+    return new TextEncoder().encode(s);
+  }
+  function uint8ToStr(u8){
+    return new TextDecoder().decode(u8);
+  }
+
+  // XOR bytes with key bytes (key repeats)
+  function xorWithKey(dataBytes, keyString){
+    if(!keyString) return dataBytes; // if no key, return original
+    const keyBytes = strToUint8(keyString);
+    const out = new Uint8Array(dataBytes.length);
+    for(let i=0;i<dataBytes.length;i++){
+      out[i] = dataBytes[i] ^ keyBytes[i % keyBytes.length];
+    }
+    return out;
+  }
+
+  // Base64 helpers (browser built-ins)
+  function bytesToBase64(u8){
+    // convert to binary string first
+    let CHUNK = 0x8000;
+    let index = 0;
+    let result = '';
+    while(index < u8.length){
+      let slice = u8.subarray(index, Math.min(index + CHUNK, u8.length));
+      result += String.fromCharCode.apply(null, slice);
+      index += CHUNK;
+    }
+    return btoa(result);
+  }
+  function base64ToBytes(b64){
+    const bin = atob(b64);
+    const len = bin.length;
+    const bytes = new Uint8Array(len);
+    for(let i=0;i<len;i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+
+  // Main encode: string -> XOR -> base64
+  function encodeString(inputStr, key){
+    const bytes = strToUint8(inputStr);
+    const xored = xorWithKey(bytes, key || '');
+    return bytesToBase64(xored);
+  }
+
+  // Main decode: base64 -> XOR -> string
+  function decodeToString(b64, key){
+    try{
+      const bytes = base64ToBytes(b64);
+      const xored = xorWithKey(bytes, key || '');
+      return uint8ToStr(xored);
+    }catch(e){
+      throw new Error('Invalid input for decoding (not valid Base64 or corrupted).');
+    }
+  }
+
+  // UI wiring
+  const inputEl = document.getElementById('inputHtml');
+  const keyEl = document.getElementById('keyInput');
+  const outEl = document.getElementById('output');
+  const statusEl = document.getElementById('status');
+  const encodeBtn = document.getElementById('encodeBtn');
+  const decodeBtn = document.getElementById('decodeBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const copyBtn = document.getElementById('copyOut');
+  const previewBtn = document.getElementById('previewBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
+
+  function setStatus(t){
+    statusEl.textContent = t;
+  }
+
+  encodeBtn.addEventListener('click', ()=>{
+    const text = inputEl.value || '';
+    const key = keyEl.value || '';
+    try{
+      const result = encodeString(text, key);
+      outEl.value = result;
+      setStatus('Encoded ✔');
+    }catch(e){
+      setStatus('Encode error');
+      console.error(e);
+    }
+  });
+
+  decodeBtn.addEventListener('click', ()=>{
+    const b64 = outEl.value || '';
+    const key = keyEl.value || '';
+    if(!b64){ setStatus('No output to decode'); return; }
+    try{
+      const decoded = decodeToString(b64, key);
+      // put decoded into input area (non-destructive)
+      inputEl.value = decoded;
+      setStatus('Decoded into input ✔');
+    }catch(e){
+      setStatus('Decode failed: invalid data or wrong key');
+      console.error(e);
+    }
+  });
+
+  clearBtn.addEventListener('click', ()=>{
+    inputEl.value = '';
+    outEl.value = '';
+    keyEl.value = '';
+    setStatus('Cleared');
+  });
+
+  copyBtn.addEventListener('click', async ()=>{
+    try{
+      await navigator.clipboard.writeText(outEl.value || '');
+      setStatus('Copied to clipboard ✔');
+    }catch(e){
+      // fallback
+      outEl.select();
+      document.execCommand('copy');
+      setStatus('Copied (fallback)');
+    }
+  });
+
+  previewBtn.addEventListener('click', ()=>{
+    const b64 = outEl.value || '';
+    const key = keyEl.value || '';
+    if(!b64){ setStatus('No output to preview'); return; }
+    try{
+      const decoded = decodeToString(b64, key);
+      // open preview in new window with sanitized content type
+      const win = window.open();
+      if(!win){ setStatus('Popup blocked — allow popups to preview'); return; }
+      win.document.open();
+      win.document.write(decoded);
+      win.document.close();
+      setStatus('Preview opened in new tab');
+    }catch(e){
+      setStatus('Preview failed: invalid data or wrong key');
+      console.error(e);
+    }
+  });
+
+  downloadBtn.addEventListener('click', ()=>{
+    const data = outEl.value || '';
+    const blob = new Blob([data], {type:'text/plain;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'encoded.txt';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    setStatus('Downloaded encoded.txt');
+  });
+
+  // keyboard shortcut: Ctrl+Enter to encode
+  document.addEventListener('keydown', (e)=>{
+    if((e.ctrlKey||e.metaKey) && e.key === 'Enter'){
+      encodeBtn.click();
+    }
+  });
+
+  // small hint: sample usage when empty
+  if(!inputEl.value){
+    inputEl.value = '<!-- Example: paste your HTML here -->\n<div>\n  <h2>Hello World</h2>\n  <p>This is a sample HTML to encode.</p>\n</div>';
+  }
+  </script>
+</body>
+</html>          <option value="bootstrap">Bootstrap starter</option>
         </select>
       </div>
       <textarea id="editor"><!doctype html>
